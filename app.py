@@ -11,7 +11,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 2. ULTRA-LUXURY VISUAL STYLE
+# 2. ULTRA-LUXURY VISUAL STYLE (NUCLEAR EDITION)
 st.markdown("""
 <style>
     /* 1. Main Background */
@@ -20,14 +20,16 @@ st.markdown("""
         color: #FAFAFA;
     }
     
-    /* 2. AGGRESSIVE FOOTER REMOVAL */
+    /* 2. NUCLEAR FOOTER REMOVAL */
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     .stDeployButton {display:none;}
-    [data-testid="stFooter"] {visibility: hidden; height: 0px;}
-    section[data-testid="stSidebar"] {display: none;}
+    
+    /* This targets the specific "Built with Streamlit" balloon */
     .viewerBadge_container__1QSob {display: none !important;}
+    [data-testid="stDecoration"] {display:none;}
+    [data-testid="stFooter"] {display: none !important;}
     
     /* 3. Style the Input Fields */
     .stTextInput input, .stSelectbox div[data-testid="stMarkdownContainer"] {
@@ -37,34 +39,45 @@ st.markdown("""
         background-color: #262730 !important;
         border: 1px solid #555 !important;
     }
-    /* Style the Dropdown box to match */
+    /* Style the Dropdown box */
     div[data-baseweb="select"] > div {
         background-color: #262730 !important;
         color: #FFFFFF !important;
         border: 1px solid #555 !important;
     }
-    
     .stTextInput label, .stSelectbox label {
         color: #D4AF37 !important;
     }
 
-    /* 4. FORCE GOLD BUTTON */
-    button[data-testid="baseButton-secondary"] {
+    /* 4. FORCE GOLD BUTTON (The Nuclear Option) */
+    /* Target EVERY possible button state */
+    button, 
+    div.stButton > button, 
+    button[data-testid="baseButton-secondary"],
+    button[kind="secondary"] {
         background-color: #D4AF37 !important;
         color: #000000 !important;
         border: none !important;
         font-weight: bold !important;
+        font-size: 16px !important;
+        padding: 0.5rem 1rem !important;
+        width: 100% !important;
         opacity: 1 !important;
     }
-    div.stButton > button {
-        background-color: #D4AF37 !important;
-        color: #000000 !important;
-        border: none !important;
-    }
+    
+    /* Hover State */
+    button:hover, 
+    div.stButton > button:hover,
     button[data-testid="baseButton-secondary"]:hover {
-        background-color: #F8F8FF !important;
-        color: #D4AF37 !important;
-        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.5);
+        background-color: #F8F8FF !important; /* White */
+        color: #D4AF37 !important; /* Gold Text */
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.5) !important;
+    }
+    
+    /* Remove outline on focus */
+    button:focus {
+        outline: none !important;
+        box-shadow: none !important;
     }
 
     /* 5. Chat Message Styling */
@@ -105,7 +118,6 @@ if st.session_state.user_info is None:
     with st.form("lead_capture_form"):
         name = st.text_input("Full Name")
         
-        # COMMON COUNTRY CODES LIST
         country_codes = [
             "+971 (UAE)", "+1 (USA/CAN)", "+44 (UK)", "+91 (IND)", 
             "+966 (KSA)", "+965 (KWT)", "+974 (QAT)", "+973 (BHR)", "+968 (OMN)",
@@ -115,7 +127,6 @@ if st.session_state.user_info is None:
         
         col1, col2 = st.columns([1.5, 3])
         with col1:
-            # Dropdown menu defaulting to UAE (+971)
             country_code = st.selectbox("Code", options=country_codes, index=0)
         with col2:
             mobile_number = st.text_input("Mobile Number")
@@ -123,7 +134,6 @@ if st.session_state.user_info is None:
         submitted = st.form_submit_button("ENTER CONCIERGE")
         
         if submitted and name and mobile_number:
-            # Clean up the code string (remove the country name for the save)
             clean_code = country_code.split(" ")[0] 
             full_phone = f"{clean_code} {mobile_number}"
             
