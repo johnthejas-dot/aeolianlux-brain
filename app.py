@@ -11,64 +11,70 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 2. ULTRA-LUXURY VISUAL STYLE (CSS)
+# 2. ULTRA-LUXURY VISUAL STYLE
 st.markdown("""
 <style>
-    /* 1. Main Background - Deep Dark Navy/Black */
+    /* 1. Main Background */
     .stApp {
         background-color: #0E1117;
         color: #FAFAFA;
     }
     
     /* 2. AGGRESSIVE FOOTER REMOVAL */
+    header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
     .stDeployButton {display:none;}
-    [data-testid="stFooter"] {display: none !important;}
-    div[data-testid="stDecoration"] {display:none;}
+    [data-testid="stFooter"] {visibility: hidden; height: 0px;}
+    section[data-testid="stSidebar"] {display: none;}
+    .viewerBadge_container__1QSob {display: none !important;}
     
-    /* 3. Style the Input Fields (Name/Phone) */
-    .stTextInput input {
+    /* 3. Style the Input Fields */
+    .stTextInput input, .stSelectbox div[data-testid="stMarkdownContainer"] {
         color: #FFFFFF !important;
+    }
+    .stTextInput input {
         background-color: #262730 !important;
-        border: 1px solid #444 !important;
-        border-radius: 5px;
+        border: 1px solid #555 !important;
     }
-    .stTextInput label {
-        color: #D4AF37 !important; /* Gold Labels */
+    /* Style the Dropdown box to match */
+    div[data-baseweb="select"] > div {
+        background-color: #262730 !important;
+        color: #FFFFFF !important;
+        border: 1px solid #555 !important;
     }
     
-    /* 4. GOLD BUTTON for "Start Concierge" */
-    div.stButton > button:first-child {
-        background-color: #D4AF37 !important; /* Luxury Gold */
-        color: #000000 !important; /* Black Text */
+    .stTextInput label, .stSelectbox label {
+        color: #D4AF37 !important;
+    }
+
+    /* 4. FORCE GOLD BUTTON */
+    button[data-testid="baseButton-secondary"] {
+        background-color: #D4AF37 !important;
+        color: #000000 !important;
         border: none !important;
-        border-radius: 5px !important;
         font-weight: bold !important;
-        font-size: 18px !important;
-        padding: 10px 20px !important;
-        width: 100%;
-        transition: all 0.3s ease;
+        opacity: 1 !important;
     }
-    div.stButton > button:hover {
-        background-color: #F8F8FF !important; /* White on Hover */
-        color: #D4AF37 !important; /* Gold Text on Hover */
-        box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+    div.stButton > button {
+        background-color: #D4AF37 !important;
+        color: #000000 !important;
+        border: none !important;
     }
-    
+    button[data-testid="baseButton-secondary"]:hover {
+        background-color: #F8F8FF !important;
+        color: #D4AF37 !important;
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.5);
+    }
+
     /* 5. Chat Message Styling */
-    /* User Message */
     .stChatMessage[data-testid="stChatMessage"]:nth-child(odd) {
         background-color: #1E1E1E;
         border: 1px solid #333;
-        border-radius: 10px;
     }
-    /* AI Message (Gold Border) */
     .stChatMessage[data-testid="stChatMessage"]:nth-child(even) {
         background-color: #161920;
         border: 1px solid #D4AF37;
-        border-radius: 10px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -88,30 +94,39 @@ if "chat_history" not in st.session_state:
 if "user_info" not in st.session_state:
     st.session_state.user_info = None
 
-# --- LEAD CAPTURE FORM (Gold & Elegant) ---
+# --- LEAD CAPTURE FORM ---
 if st.session_state.user_info is None:
-    # Centered Logo and Title
     st.markdown("<h1 style='text-align: center; color: #D4AF37;'>⚜️ Aeolianlux</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; font-style: italic; color: #BBBBBB;'>The Definition of Dubai Luxury.</p>", unsafe_allow_html=True)
     st.markdown("---")
     
-    # NEW OPTION 2 TEXT IS HERE
     st.write("May we request the pleasure of your introduction to serve you better as you navigate the absolute pinnacle of Dubai luxury?")
     
     with st.form("lead_capture_form"):
         name = st.text_input("Full Name")
         
-        # Split Phone Number (Country Code + Number)
-        col1, col2 = st.columns([1, 3])
+        # COMMON COUNTRY CODES LIST
+        country_codes = [
+            "+971 (UAE)", "+1 (USA/CAN)", "+44 (UK)", "+91 (IND)", 
+            "+966 (KSA)", "+965 (KWT)", "+974 (QAT)", "+973 (BHR)", "+968 (OMN)",
+            "+7 (RUS)", "+86 (CHN)", "+33 (FRA)", "+49 (GER)", "+39 (ITA)", 
+            "+41 (CHE)", "+61 (AUS)", "+65 (SGP)"
+        ]
+        
+        col1, col2 = st.columns([1.5, 3])
         with col1:
-            country_code = st.text_input("Code", value="+971")
+            # Dropdown menu defaulting to UAE (+971)
+            country_code = st.selectbox("Code", options=country_codes, index=0)
         with col2:
             mobile_number = st.text_input("Mobile Number")
             
         submitted = st.form_submit_button("ENTER CONCIERGE")
         
         if submitted and name and mobile_number:
-            full_phone = f"{country_code} {mobile_number}"
+            # Clean up the code string (remove the country name for the save)
+            clean_code = country_code.split(" ")[0] 
+            full_phone = f"{clean_code} {mobile_number}"
+            
             print(f"NEW LEAD: {name} - {full_phone} - {datetime.datetime.now()}")
             st.session_state.user_info = {"name": name, "phone": full_phone}
             st.rerun()
@@ -119,7 +134,6 @@ if st.session_state.user_info is None:
     st.stop()
 
 # --- CHAT INTERFACE ---
-# Header
 st.markdown(f"<h3 style='color: #D4AF37;'>⚜️ Welcome, {st.session_state.user_info['name']}</h3>", unsafe_allow_html=True)
 
 # Display Chat History
@@ -128,16 +142,15 @@ for message in st.session_state.chat_history:
     with st.chat_message(role):
         st.markdown(message["content"])
 
-# Chat Input with Premium Greeting
+# Chat Input
 user_input = st.chat_input("I am at your service. What do you wish to discover about Dubai Luxury Living?")
 
 if user_input:
-    # 1. Show User Message
     with st.chat_message("user"):
         st.markdown(user_input)
     st.session_state.chat_history.append({"role": "user", "content": user_input})
 
-    # 2. Retrieve Knowledge
+    # Retrieve Knowledge
     try:
         xq = client.embeddings.create(input=user_input, model="text-embedding-3-small").data[0].embedding
         res = index.query(vector=xq, top_k=3, include_metadata=True)
@@ -145,7 +158,7 @@ if user_input:
     except:
         knowledge = "No specific database info found."
 
-    # 3. Generate AI Response
+    # Generate AI Response
     system_prompt = f"""
     You are Aeolianlux, Dubai's most elite digital concierge.
     User Name: {st.session_state.user_info['name']}
