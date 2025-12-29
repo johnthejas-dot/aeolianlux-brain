@@ -3,9 +3,9 @@ from openai import OpenAI
 from pinecone import Pinecone
 
 # 1. Page Configuration
-st.set_page_config(page_title="Aeolianlux AI", page_icon="🤖")
-st.title("Aeolianlux Intelligence")
-st.caption("Ask me about UAE Jobs & International Clients.")
+st.set_page_config(page_title="Aeolianlux Luxury Living", page_icon="✨")
+st.title("Dubai Luxury Living")
+st.caption("Stay • Shop • Food")
 
 # 2. Connect
 try:
@@ -16,15 +16,18 @@ except Exception as e:
     st.error(f"Connection Error: {e}. Did you set up the secrets?")
     st.stop()
 
-# 3. Chat History
+# 3. Chat History (UPDATED GREETING)
 if "messages" not in st.session_state:
-    st.session_state["messages"] = [{"role": "assistant", "content": "Hello! I can help you find clients and job opportunities in our database. What are you looking for?"}]
+    st.session_state["messages"] = [{
+        "role": "assistant", 
+        "content": "Hello! I can help you find Exotic Luxury places to stay, excellent restaurants, and where to buy Luxury special gifts. What are you looking for?"
+    }]
 
 for msg in st.session_state.messages:
     st.chat_message(msg["role"]).write(msg["content"])
 
-# 4. Input
-if prompt := st.chat_input("Type your question here..."):
+# 4. Input (UPDATED PLACEHOLDER)
+if prompt := st.chat_input("Ask me about Dubai Luxury life..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.chat_message("user").write(prompt)
 
@@ -49,21 +52,17 @@ if prompt := st.chat_input("Type your question here..."):
             if 'text' in match['metadata']:
                 context_text += match['metadata']['text'] + "\n---\n"
 
-        # D. Answer (UPDATED INSTRUCTION)
-        system_prompt = f"""You are an intelligent consultant for Aeolianlux.
-        The user is asking about Jobs, Clients, or Business Opportunities.
-        
-        The Context below contains a list of Companies/Clients. 
-        TREAT THESE COMPANIES AS POTENTIAL JOB OPPORTUNITIES OR LEADS.
+        # D. Answer
+        system_prompt = f"""You are a Luxury Concierge for Dubai.
         
         Context from Database:
         {context_text}
         
         Instructions:
-        1. If the user asks for "Jobs" in a specific location (like Dubai), list the companies found in the context as potential opportunities.
-        2. Provide details (Phone/Email) if available in the context.
-        3. Be professional and encouraging.
-        4. If the context is empty, politely say you don't have records for that specific request yet.
+        1. Answer the user's question using the Context provided.
+        2. If the user asks for hotels, restaurants, or shopping, recommend the best options from the database.
+        3. Maintain a polite, premium, and helpful tone.
+        4. If the answer is not in the context, offer to connect them to the Aeolianlux team for a bespoke arrangement.
         """
 
         openai_response = client.chat.completions.create(
