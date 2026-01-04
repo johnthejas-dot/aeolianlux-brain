@@ -37,6 +37,18 @@ st.markdown("""
         color: #000000 !important; 
         font-weight: 900 !important;
     }
+    
+    /* Chat Messages - Force Text Color */
+    .stChatMessage[data-testid="stChatMessage"]:nth-child(odd) {
+        background-color: #1E1E1E !important;
+    }
+    .stChatMessage[data-testid="stChatMessage"]:nth-child(even) {
+        background-color: #161920 !important;
+        border: 1px solid #D4AF37 !important;
+    }
+    [data-testid="stChatMessage"] p {
+        color: #E0E0E0 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -44,17 +56,20 @@ st.markdown("""
 try:
     from openai import OpenAI
     from pinecone import Pinecone
+    
+    # Connect to OpenAI
     if "OPENAI_API_KEY" in st.secrets:
         client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
     else:
         client = None
     
+    # Connect to Pinecone (Database)
     if "PINECONE_API_KEY" in st.secrets:
         pc = Pinecone(api_key=st.secrets["PINECONE_API_KEY"])
         index = pc.Index("aeolianlux-index")
     else:
         index = None
-except Exception:
+except Exception as e:
     client = None
     index = None
 
@@ -91,16 +106,49 @@ for message in st.session_state.chat_history:
         st.markdown(message["content"])
 
 if prompt := st.chat_input("Ask me about Dubai Luxury..."):
+    # 1. Show User Message
     with st.chat_message("user"):
         st.markdown(prompt)
     st.session_state.chat_history.append({"role": "user", "content": prompt})
 
-    # AI Response Logic
+    # 2. THE REAL AI LOGIC (This was missing!)
     if client:
-        # (Simple response logic for now to prevent errors)
-        response = "Thank you for your inquiry. I am checking our luxury database..." 
+        # Retrieve Knowledge from Pinecone
+        knowledge = ""
+        if index:
+            try:
+                xq = client.embeddings.create(input=prompt, model="text-embedding-3-small").data[0].embedding
+                res = index.query(vector=xq, top_k=3, include_metadata=True)
+                knowledge = "\n".join([match['metadata']['text'] for match in res['matches']])
+            except:
+                knowledge = "No specific database info found."
+
+        # Generate Answer
+        system_prompt = f"""
+        You are Aeolianlux, Dubai's most elite digital concierge.
+        User Name: {st.session_state.user_info['name']}
+        
+        Context from database:
+        {knowledge}
+        
+        Tone Guidelines:
+        - Elegant, sophisticated, and warm. Use words like "Exquisite," "Bespoke," "Curated."
+        - Be helpful but concise.
+        """
+        
         with st.chat_message("assistant"):
-            st.markdown(response)
+            response_stream = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                stream=True
+            )
+            response = st.write_stream(response_stream)
+        
         st.session_state.chat_history.append({"role": "assistant", "content": response})
+
     else:
-        st.error("AI Brain is offline (Check API Keys).")
+        # Fallback if Keys are missing
+        st.error("Concierge is offline. Please add OPENAI_API_KEY to secrets.")
