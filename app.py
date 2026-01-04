@@ -19,13 +19,13 @@ st.markdown("""
         color: #FAFAFA;
     }
     
-    /* 2. AGGRESSIVE FOOTER REMOVAL */
-    /* Hides the hamburger menu, footer, and the 'Built with Streamlit' red balloon */
+    /* 2. HIDE STREAMLIT BRANDING (Footer & Menu) */
     header {visibility: hidden !important;}
     footer {visibility: hidden !important;}
     .stDeployButton {display:none !important;}
     [data-testid="stDecoration"] {display:none !important;}
     [data-testid="stStatusWidget"] {display:none !important;}
+    #MainMenu {visibility: hidden !important;}
     
     /* 3. INPUT FIELDS (Visible Text) */
     .stTextInput input {
@@ -38,17 +38,20 @@ st.markdown("""
         color: #D4AF37 !important; /* Gold Label */
     }
     
-    /* 4. THE GOLD BUTTON (Fixing the Invisible Text) */
+    /* --- 4. THE BUTTON FIX (THE NUCLEAR OPTION) --- */
+    /* Force the button background to Gold */
     div.stButton > button {
-        background-color: #D4AF37 !important; /* Gold Background */
+        background-color: #D4AF37 !important; 
         border: none !important;
         transition: all 0.3s ease;
     }
     
-    /* Force the TEXT inside the button to be BLACK */
-    div.stButton > button p {
+    /* FORCE ALL TEXT INSIDE THE BUTTON TO BE BLACK */
+    div.stButton > button p, 
+    div.stButton > button span,
+    div.stButton > button div {
         color: #000000 !important; 
-        font-weight: bold !important;
+        font-weight: 900 !important; /* Extra Bold */
         font-size: 18px !important;
     }
     
@@ -57,8 +60,10 @@ st.markdown("""
         background-color: #FFFFFF !important; /* White Background */
         border: 1px solid #D4AF37 !important;
     }
-    div.stButton > button:hover p {
-        color: #D4AF37 !important; /* Gold Text on Hover */
+    /* FORCE TEXT TO BE GOLD ON HOVER */
+    div.stButton > button:hover p,
+    div.stButton > button:hover span {
+        color: #D4AF37 !important; 
     }
     
     /* 5. CHAT MESSAGES */
@@ -78,9 +83,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- 3. INITIALIZE CONNECTIONS ---
-# (Placeholder for OpenAI/Pinecone to prevent crashes if keys are missing)
 try:
-    # Only try to import if you have keys, otherwise skip to prevent errors
     from openai import OpenAI
     from pinecone import Pinecone
     
@@ -95,7 +98,6 @@ try:
     else:
         index = None
 except Exception as e:
-    # Fail silently or just set client to None so the app still loads
     client = None
     index = None
 
