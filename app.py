@@ -91,7 +91,7 @@ country_codes = [
 
 # Lead Capture Form
 if st.session_state.user_info is None:
-    st.markdown("<h1 style='text-align: center; color: #D4AF37;'>⚜️ Aeolian Lux</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #D4AF37;'>⚜️ Aeolian Lux ⚜️</h1>", unsafe_allow_html=True)
     st.write("May we request the pleasure of your introduction to serve you better?")
     
     with st.form("lead_capture_form"):
