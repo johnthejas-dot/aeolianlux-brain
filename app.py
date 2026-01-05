@@ -21,12 +21,12 @@ st.markdown("""
     .stDeployButton {display:none !important;}
     
     /* Input Fields */
-    .stTextInput input {
+    .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {
         color: #000000 !important; 
         background-color: #FFFFFF !important; 
         border: 1px solid #D4AF37 !important; 
     }
-    .stTextInput label { color: #D4AF37 !important; }
+    .stTextInput label, .stSelectbox label { color: #D4AF37 !important; }
     
     /* Gold Buttons */
     [data-testid="stFormSubmitButton"] > button {
@@ -79,22 +79,36 @@ if "user_info" not in st.session_state:
     st.session_state.user_info = None
 
 # --- 4. APP INTERFACE ---
+
+# --- Common Country Codes List (New Feature) ---
+country_codes = [
+    "+971 (UAE)", "+1 (USA/Canada)", "+44 (UK)", "+91 (India)", 
+    "+966 (Saudi Arabia)", "+974 (Qatar)", "+973 (Bahrain)", 
+    "+965 (Kuwait)", "+968 (Oman)", "+33 (France)", 
+    "+49 (Germany)", "+39 (Italy)", "+86 (China)", 
+    "+81 (Japan)", "+7 (Russia)", "+61 (Australia)"
+]
+
 # Lead Capture Form
 if st.session_state.user_info is None:
-    st.markdown("<h1 style='text-align: center; color: #D4AF37;'>⚜️ Aeolianlux</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #D4AF37;'>⚜️ Aeolian Lux</h1>", unsafe_allow_html=True)
     st.write("May we request the pleasure of your introduction to serve you better?")
     
     with st.form("lead_capture_form"):
         name = st.text_input("Full Name")
-        col1, col2 = st.columns([1, 3])
+        
+        # New Layout with Dropdown
+        col1, col2 = st.columns([1.5, 3]) 
         with col1:
-            country_code = st.text_input("Code", value="+971")
+            country_code_selection = st.selectbox("Code", options=country_codes, index=0)
         with col2:
-            mobile_number = st.text_input("Mobile Number")
+            mobile_number = st.text_input("Mobile Number", placeholder="50 123 4567")
             
         if st.form_submit_button("ENTER CONCIERGE"):
             if name and mobile_number:
-                st.session_state.user_info = {"name": name, "phone": f"{country_code} {mobile_number}"}
+                # Clean the code to just get "+971" etc.
+                clean_code = country_code_selection.split(" ")[0]
+                st.session_state.user_info = {"name": name, "phone": f"{clean_code} {mobile_number}"}
                 st.rerun()
     st.stop()
 
@@ -111,7 +125,7 @@ if prompt := st.chat_input("Ask me about Dubai Luxury..."):
         st.markdown(prompt)
     st.session_state.chat_history.append({"role": "user", "content": prompt})
 
-    # 2. THE REAL AI LOGIC (This was missing!)
+    # 2. THE REAL AI LOGIC
     if client:
         # Retrieve Knowledge from Pinecone
         knowledge = ""
