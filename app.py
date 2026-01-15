@@ -52,27 +52,38 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. LOGIC & CONNECTIONS ---
-try:
-    from openai import OpenAI
-    from pinecone import Pinecone
-    
-    # Connect to OpenAI
-    if "OPENAI_API_KEY" in st.secrets:
-        client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-    else:
-        client = None
-    
-    # Connect to Pinecone (Database)
-    if "PINECONE_API_KEY" in st.secrets:
-        pc = Pinecone(api_key=st.secrets["PINECONE_API_KEY"])
-        index = pc.Index("aeolianlux-index")
-    else:
-        index = None
-except Exception as e:
-    client = None
-    index = None
+# --- 3. LOGIC & CONNECTIONS (CACHED TO FIX GLITCHES) ---
+# We wrap this in @st.cache_resource so it runs once and stays connected
+# This prevents the "Enter" button from resetting the app on click.
 
+@st.cache_resource
+def init_connections():
+    try:
+        from openai import OpenAI
+        from pinecone import Pinecone
+        
+        # Connect to OpenAI
+        if "OPENAI_API_KEY" in st.secrets:
+            client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+        else:
+            client = None
+        
+        # Connect to Pinecone (Database)
+        if "PINECONE_API_KEY" in st.secrets:
+            pc = Pinecone(api_key=st.secrets["PINECONE_API_KEY"])
+            # Ensure your Index name matches exactly
+            index = pc.Index("aeolianlux-index")
+        else:
+            index = None
+            
+        return client, index
+    except Exception as e:
+        return None, None
+
+# Initialize connections
+client, index = init_connections()
+
+# Initialize Session State (Memory)
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 if "user_info" not in st.session_state:
@@ -80,7 +91,7 @@ if "user_info" not in st.session_state:
 
 # --- 4. APP INTERFACE ---
 
-# --- Common Country Codes List (New Feature) ---
+# --- Common Country Codes List ---
 country_codes = [
     "+971 (UAE)", "+1 (USA/Canada)", "+44 (UK)", "+91 (India)", 
     "+966 (Saudi Arabia)", "+974 (Qatar)", "+973 (Bahrain)", 
@@ -97,7 +108,7 @@ if st.session_state.user_info is None:
     with st.form("lead_capture_form"):
         name = st.text_input("Full Name")
         
-        # New Layout with Dropdown
+        # Layout with Dropdown
         col1, col2 = st.columns([1.5, 3]) 
         with col1:
             country_code_selection = st.selectbox("Code", options=country_codes, index=0)
@@ -134,7 +145,7 @@ if prompt := st.chat_input("Ask me about Dubai Luxury..."):
                 xq = client.embeddings.create(input=prompt, model="text-embedding-3-small").data[0].embedding
                 res = index.query(vector=xq, top_k=3, include_metadata=True)
                 knowledge = "\n".join([match['metadata']['text'] for match in res['matches']])
-            except:
+            except Exception as e:
                 knowledge = "No specific database info found."
 
         # Generate Answer
@@ -151,18 +162,19 @@ if prompt := st.chat_input("Ask me about Dubai Luxury..."):
         """
         
         with st.chat_message("assistant"):
-            response_stream = client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prompt}
-                ],
-                stream=True
-            )
-            response = st.write_stream(response_stream)
-        
-        st.session_state.chat_history.append({"role": "assistant", "content": response})
-
+            try:
+                response_stream = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": prompt}
+                    ],
+                    stream=True
+                )
+                response = st.write_stream(response_stream)
+                st.session_state.chat_history.append({"role": "assistant", "content": response})
+            except Exception as e:
+                st.error("An error occurred generating the response. Please try again.")
     else:
         # Fallback if Keys are missing
-        st.error("Concierge is offline. Please add OPENAI_API_KEY to secrets.")
+        st.error("Concierge is offline. Please check API keys.")
