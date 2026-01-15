@@ -1,14 +1,27 @@
-name: Keep App Alive
+name: Wake Up Streamlit App
 
 on:
   schedule:
-    # Runs every 30 minutes
-    - cron: '*/30 * * * *'
-  workflow_dispatch: # Allows manual run
+    # Runs at minute 0 and 30 of every hour (every 30 mins)
+    - cron: "0,30 * * * *"
+  workflow_dispatch: # Allows you to run it manually from GitHub for testing
 
 jobs:
-  ping_site:
+  wake-up-job:
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Ping Aeolianlux
-        run: curl -I https://aeolianlux-concierge.streamlit.app
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: |
+          pip install selenium webdriver-manager
+
+      - name: Run Wake Up Script
+        run: python tests/wake_up.py
