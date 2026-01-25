@@ -14,7 +14,7 @@ st.set_page_config(
     page_title="Aeolian Lux | AI Concierge", 
     page_icon="✨", 
     layout="wide",
-    # UPDATED: Set to 'collapsed' for a cleaner LinkedIn demo look
+    # Set to 'collapsed' to hide the sidebar on load for a clean LinkedIn look
     initial_sidebar_state="collapsed" 
 )
 
