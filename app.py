@@ -76,8 +76,14 @@ def login_screen():
             st.error(f"Config Error: {e}")
             return
 
+        # --- FIX: HARDCODED REDIRECT URI FOR CLOUD RUN ---
+        # This tells the app exactly where it lives on the internet.
+        redirect_uri = "https://aeolianlux-brain-265071649009.me-central1.run.app/component/streamlit_oauth.authorize_button"
+        
         oauth2 = OAuth2Component(CLIENT_ID, CLIENT_SECRET, AUTHORIZE_URL, TOKEN_URL, TOKEN_URL, "")
-        result = oauth2.authorize_button("Experience the AI", "http://localhost:8501", "openid email profile")
+        
+        # We pass the explicit 'redirect_uri' here to override localhost
+        result = oauth2.authorize_button("Experience the AI", redirect_uri, "openid email profile")
         
         if result:
             try:
