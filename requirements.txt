@@ -1,5 +1,6 @@
-streamlit
-openai
-pinecone
+flask
+google-generativeai
+gunicorn
+flask-cors
 pandas
 openpyxl
