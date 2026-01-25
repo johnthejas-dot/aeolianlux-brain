@@ -18,13 +18,22 @@ st.set_page_config(
 )
 
 # API KEY SETUP
-GOOG_API_KEY = "AIzaSyD4-xlOdK1tPRN7JYMii0fzT72idj-R_ZE"
+# Try to get from Cloud Secret/Env Var first, otherwise use the hardcoded one
+GOOG_API_KEY = os.environ.get("GOOG_API_KEY", "AIzaSyD4-xlOdK1tPRN7JYMii0fzT72idj-R_ZE")
 genai.configure(api_key=GOOG_API_KEY)
 
 # Connect to Database (CRM Feature)
 if not firebase_admin._apps:
     try:
-        cred = credentials.Certificate('firestore_key.json') 
+        # STRATEGY: Check for Cloud Secret first -> Then Local File
+        if "FIRESTORE_KEY_CONTENT" in os.environ:
+            # We are in the Cloud! Read from the secret vault.
+            key_dict = json.loads(os.environ["FIRESTORE_KEY_CONTENT"])
+            cred = credentials.Certificate(key_dict)
+        else:
+            # We are on the Mac! Read the file.
+            cred = credentials.Certificate('firestore_key.json') 
+            
         firebase_admin.initialize_app(cred)
     except Exception as e:
         st.error(f"Failed to connect to Database: {e}")
@@ -51,13 +60,18 @@ def login_screen():
         from streamlit_oauth import OAuth2Component
         
         try:
-            with open('client_secret.json') as f:
-                secrets = json.load(f)
-                web_config = secrets['web']
-                CLIENT_ID = web_config['client_id']
-                CLIENT_SECRET = web_config['client_secret']
-                AUTHORIZE_URL = web_config['auth_uri']
-                TOKEN_URL = web_config['token_uri']
+            # STRATEGY: Check for Cloud Secret first -> Then Local File
+            if "CLIENT_SECRET_CONTENT" in os.environ:
+                secrets = json.loads(os.environ["CLIENT_SECRET_CONTENT"])
+            else:
+                with open('client_secret.json') as f:
+                    secrets = json.load(f)
+                    
+            web_config = secrets['web']
+            CLIENT_ID = web_config['client_id']
+            CLIENT_SECRET = web_config['client_secret']
+            AUTHORIZE_URL = web_config['auth_uri']
+            TOKEN_URL = web_config['token_uri']
         except Exception as e:
             st.error(f"Config Error: {e}")
             return
@@ -87,7 +101,7 @@ def login_screen():
             except Exception as e:
                 st.error(f"Login error: {e}")
 
-# --- 3. MODULE: CRM / CLIENT VAULT (The "Backend Skill" Showcase) ---
+# --- 3. MODULE: CRM / CLIENT VAULT ---
 def client_vault():
     st.title("🗄️ Concierge CRM")
     st.markdown("Manage VIP client requests and profiles.")
@@ -124,11 +138,10 @@ def client_vault():
             else:
                 st.info("Database is empty.")
 
-# --- 4. MODULE: AI CONCIERGE (The "Frontend Star") ---
+# --- 4. MODULE: AI CONCIERGE ---
 def load_luxury_data():
     """Reads verified luxury data from Excel."""
     combined_data = ""
-    # Files representing verified data sources
     files = ["Aeolianlux_Dubai _Jan_2026.xlsx", "Aeolianlux_Dubai _Jan_2026_luxury_services.xlsx"]
     for file in files:
         if os.path.exists(file):
@@ -139,11 +152,9 @@ def load_luxury_data():
     return combined_data
 
 def ai_consultant():
-    # LUXURY HEADER
     st.markdown("<h1 style='color: #D4AF37;'>Aeolian Lux AI Concierge</h1>", unsafe_allow_html=True)
     st.markdown("**Your Digital Chief of Staff.** *Specializing in Dubai's finest experiences.*")
     
-    # Sidebar
     with st.sidebar:
         st.write("---")
         with st.expander("ℹ️ Intelligence Feed"):
@@ -153,7 +164,6 @@ def ai_consultant():
             st.session_state.messages = []
             st.rerun()
 
-    # Chat UI
     if "messages" not in st.session_state:
         st.session_state.messages = [{
             "role": "assistant", 
@@ -165,7 +175,6 @@ def ai_consultant():
         with st.chat_message(message["role"], avatar=avatar):
             st.markdown(message["content"])
 
-    # INPUT BOX
     if prompt := st.chat_input("Ask for 5-star hotels, Patek Philippe availability, or fine dining..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user", avatar="👤"):
@@ -174,26 +183,19 @@ def ai_consultant():
         with st.chat_message("assistant", avatar="🤵"):
             message_placeholder = st.empty()
             try:
-                # Load Verified Data
                 luxury_context = load_luxury_data()
                 
-                # THE "CHIEF OF STAFF" BRAIN
                 full_prompt = f"""
                 You are the 'Aeolian Lux AI Concierge'.
-                
-                YOUR MISSION:
-                To assist high-net-worth individuals and tourists in Dubai by filtering for ONLY luxury, verified, and high-quality options.
-                
+                YOUR MISSION: To assist high-net-worth individuals and tourists in Dubai by filtering for ONLY luxury, verified, and high-quality options.
                 YOUR DATA SOURCE (Use this for specific prices/locations):
                 {luxury_context}
-                
                 USER QUERY: {prompt}
-                
                 GUIDELINES:
-                1. **Tone:** Professional, Concise, Sophisticated. (Think: "Instant answers. Infinite patience.").
-                2. **Accuracy:** Prioritize the 'VERIFIED SOURCE' data above. If the user asks for food, stay, cloths, watches, yachts, restaurants, jewellery, luxury living or hotels listed there, quote the specific prices and specs.
-                3. **Filtering:** If the user asks for something generic, suggest the specific luxury options from your data (e.g., "For a 5-star stay, I recommend Atlantis The Royal or Burj Al Arab...").
-                4. **Role:** You are not just a chatbot; you are a Digital Chief of Staff.
+                1. **Tone:** Professional, Concise, Sophisticated.
+                2. **Accuracy:** Prioritize the 'VERIFIED SOURCE' data above.
+                3. **Filtering:** If the user asks for something generic, suggest the specific luxury options from your data.
+                4. **Role:** You are a Digital Chief of Staff.
                 """
                 
                 model = genai.GenerativeModel('gemini-2.0-flash')
